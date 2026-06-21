@@ -1,0 +1,8 @@
+(* MLton basis file for the sml-deque library.
+ * Brings `structure Deque` (matching DEQUE) into scope. *)
+local
+  $(SML_LIB)/basis/basis.mlb
+in
+  deque.sig
+  deque.sml
+end
