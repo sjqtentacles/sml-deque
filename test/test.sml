@@ -1,13 +1,8 @@
-(* Dependency-free test runner for the Deque structure.
- * Prints one line per assertion and exits non-zero if any assertion fails. *)
+(* Tests for sml-deque, standardized on the shared sml-test Harness. *)
 
-val passed = ref 0
-val failed = ref 0
-
-fun check (name : string) (cond : bool) : unit =
-    if cond
-    then (passed := !passed + 1; print ("ok   - " ^ name ^ "\n"))
-    else (failed := !failed + 1; print ("FAIL - " ^ name ^ "\n"))
+structure Tests =
+struct
+  open Harness
 
 structure D = Deque
 
@@ -161,9 +156,6 @@ fun run () =
         check "single popFront empties" (x = 1 andalso D.isEmpty q')
       end
   in
-    print ("\n" ^ Int.toString (!passed) ^ " passed, "
-           ^ Int.toString (!failed) ^ " failed\n");
-    OS.Process.exit (if !failed = 0 then OS.Process.success else OS.Process.failure)
+    Harness.run ()
   end
-
-val () = run ()
+end
