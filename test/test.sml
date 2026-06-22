@@ -6,6 +6,9 @@ struct
 
 structure D = Deque
 
+fun forceSome (SOME x) = x
+  | forceSome NONE = raise Fail "expected SOME"
+
 fun run () =
   let
     (* ---- empty ---- *)
@@ -67,10 +70,10 @@ fun run () =
     val () =
       let
         val q = D.fromList [10, 20, 30, 40]
-        val SOME (a, q1) = D.popFront q
-        val SOME (b, q2) = D.popBack q1
-        val SOME (c, q3) = D.popFront q2
-        val SOME (e, q4) = D.popBack q3
+        val (a, q1) = forceSome (D.popFront q)
+        val (b, q2) = forceSome (D.popBack q1)
+        val (c, q3) = forceSome (D.popFront q2)
+        val (e, q4) = forceSome (D.popBack q3)
       in
         check "interleaved pop both ends"
               (a = 10 andalso b = 40 andalso c = 20 andalso e = 30
@@ -144,14 +147,14 @@ fun run () =
     val () =
       let
         val q = D.pushFront (1, D.empty)
-        val SOME (x, q') = D.popBack q
+        val (x, q') = forceSome (D.popBack q)
       in
         check "single popBack empties" (x = 1 andalso D.isEmpty q')
       end
     val () =
       let
         val q = D.pushBack (1, D.empty)
-        val SOME (x, q') = D.popFront q
+        val (x, q') = forceSome (D.popFront q)
       in
         check "single popFront empties" (x = 1 andalso D.isEmpty q')
       end
