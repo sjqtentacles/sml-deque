@@ -30,10 +30,30 @@ sig
   val peekFront : 'a deque -> 'a option
   val peekBack  : 'a deque -> 'a option
 
+  (* Cheap O(1) views of the ends that never rebalance (unlike peekFront/
+     peekBack, which are defined via the rebalancing pops). *)
+  val frontView : 'a deque -> 'a option
+  val backView  : 'a deque -> 'a option
+
+  (* The element at logical index i (0 = front), or NONE if out of range. *)
+  val nth : 'a deque -> int -> 'a option
+
   (* fromList: head of list = front of deque. *)
   val fromList : 'a list -> 'a deque
   val toList   : 'a deque -> 'a list
 
   (* Reverse the deque (front becomes back). *)
   val rev : 'a deque -> 'a deque
+
+  (* Traversals over the logical front-to-back sequence. *)
+  val map   : ('a -> 'b) -> 'a deque -> 'b deque
+  val app   : ('a -> unit) -> 'a deque -> unit
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a deque -> 'b   (* front to back *)
+  val foldr : ('a * 'b -> 'b) -> 'b -> 'a deque -> 'b   (* back to front *)
+  val filter : ('a -> bool) -> 'a deque -> 'a deque
+
+  (* Concatenate: all of the first deque's elements precede the second's. *)
+  val append : 'a deque * 'a deque -> 'a deque
+  (* Structural equality of the logical sequences under an element equality. *)
+  val equal : ('a * 'a -> bool) -> 'a deque * 'a deque -> bool
 end

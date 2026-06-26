@@ -158,6 +158,83 @@ fun run () =
       in
         check "single popFront empties" (x = 1 andalso D.isEmpty q')
       end
+
+    (* ---- frontView / backView (non-rebalancing) ---- *)
+    val () = section "frontView / backView"
+    val () = check "frontView empty NONE"
+                   (D.frontView (D.empty : int D.deque) = NONE)
+    val () = check "backView empty NONE"
+                   (D.backView (D.empty : int D.deque) = NONE)
+    val () = check "frontView matches front" (D.frontView (D.fromList [1,2,3]) = SOME 1)
+    val () = check "backView matches back" (D.backView (D.fromList [1,2,3]) = SOME 3)
+    val () = check "frontView single" (D.frontView (D.fromList [9]) = SOME 9)
+    val () = check "backView single" (D.backView (D.fromList [9]) = SOME 9)
+    (* a deque whose front list is empty (all elements pushed to back) *)
+    val () =
+      let val q = D.pushBack (3, D.pushBack (2, D.pushBack (1, D.empty)))
+      in
+        check "frontView when front empty" (D.frontView q = SOME 1);
+        check "backView when front empty" (D.backView q = SOME 3)
+      end
+    val () = check "frontView agrees with peekFront"
+                   (D.frontView (D.fromList [4,5,6]) = D.peekFront (D.fromList [4,5,6]))
+
+    (* ---- nth ---- *)
+    val () = section "nth"
+    val nd = D.fromList [10,20,30,40]
+    val () = check "nth 0" (D.nth nd 0 = SOME 10)
+    val () = check "nth 2" (D.nth nd 2 = SOME 30)
+    val () = check "nth last" (D.nth nd 3 = SOME 40)
+    val () = check "nth out of range" (D.nth nd 4 = NONE)
+    val () = check "nth negative" (D.nth nd ~1 = NONE)
+    val () = check "nth empty" (D.nth (D.empty : int D.deque) 0 = NONE)
+    (* nth respects logical order even with a mixed front/back deque *)
+    val () =
+      let val q = D.pushFront (0, D.pushBack (2, D.pushBack (1, D.empty)))
+      in check "nth on mixed deque" (D.nth q 0 = SOME 0 andalso D.nth q 2 = SOME 2) end
+
+    (* ---- map / app / foldl / foldr / filter ---- *)
+    val () = section "map / app / folds / filter"
+    val () = check "map doubles in order"
+                   (D.toList (D.map (fn x => x * 2) (D.fromList [1,2,3])) = [2,4,6])
+    val () = check "map empty" (D.toList (D.map (fn x => x + 1) (D.empty : int D.deque)) = [])
+    val () =
+      let val acc = ref []
+      in D.app (fn x => acc := x :: !acc) (D.fromList [1,2,3]);
+         check "app visits front to back" (List.rev (!acc) = [1,2,3])
+      end
+    val () = check "foldl front-to-back"
+                   (D.foldl (fn (x, a) => a @ [x]) [] (D.fromList [1,2,3]) = [1,2,3])
+    val () = check "foldl sum" (D.foldl (fn (x, a) => a + x) 0 (D.fromList [1,2,3,4]) = 10)
+    val () = check "foldr back-to-front"
+                   (D.foldr (fn (x, a) => a @ [x]) [] (D.fromList [1,2,3]) = [3,2,1])
+    val () = check "filter keeps evens"
+                   (D.toList (D.filter (fn x => x mod 2 = 0) (D.fromList [1,2,3,4,5,6])) = [2,4,6])
+    val () = check "filter all-out empty"
+                   (D.isEmpty (D.filter (fn _ => false) (D.fromList [1,2,3])))
+
+    (* ---- append / equal ---- *)
+    val () = section "append / equal"
+    val () = check "append joins"
+                   (D.toList (D.append (D.fromList [1,2], D.fromList [3,4])) = [1,2,3,4])
+    val () = check "append left empty"
+                   (D.toList (D.append (D.empty, D.fromList [3,4])) = [3,4])
+    val () = check "append right empty"
+                   (D.toList (D.append (D.fromList [1,2], D.empty)) = [1,2])
+    val () = check "append size" (D.size (D.append (D.fromList [1,2,3], D.fromList [4,5])) = 5)
+    val eqI = fn (a : int, b) => a = b
+    val () = check "equal same" (D.equal eqI (D.fromList [1,2,3], D.fromList [1,2,3]))
+    val () = check "equal different content"
+                   (not (D.equal eqI (D.fromList [1,2,3], D.fromList [1,2,4])))
+    val () = check "equal different length"
+                   (not (D.equal eqI (D.fromList [1,2], D.fromList [1,2,3])))
+    val () = check "equal empty" (D.equal eqI (D.empty, D.empty))
+    (* equality is by logical sequence, not internal representation *)
+    val () =
+      let
+        val q1 = D.fromList [1,2,3]
+        val q2 = D.pushFront (1, D.pushBack (3, D.pushBack (2, D.empty)))
+      in check "equal ignores representation" (D.equal eqI (q1, q2)) end
   in
     Harness.run ()
   end

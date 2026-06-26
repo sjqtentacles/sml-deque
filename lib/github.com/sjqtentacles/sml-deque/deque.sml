@@ -86,9 +86,51 @@ struct
   fun peekBack d =
       (case popBack d of SOME (x, _) => SOME x | NONE => NONE)
 
+  (* Cheap views that never rebalance. Logical seq = f @ rev b, so the front is
+     hd f when f is non-empty, otherwise the last element of b (the head of
+     rev b); symmetrically the back is hd b when b is non-empty, otherwise the
+     last element of f. *)
+  fun lastOf [] = NONE
+    | lastOf xs = SOME (List.last xs)
+
+  fun frontView (f, _, b, _) =
+      (case f of x :: _ => SOME x | [] => lastOf b)
+  fun backView (f, _, b, _) =
+      (case b of x :: _ => SOME x | [] => lastOf f)
+
   fun fromList xs = (xs, List.length xs, [], 0)
 
   fun toList (f, _, b, _) = f @ List.rev b
 
   fun rev (f, fn_, b, bn) = (b, bn, f, fn_)
+
+  fun nth d i =
+      if i < 0 then NONE
+      else
+        let
+          fun go (_, []) = NONE
+            | go (0, x :: _) = SOME x
+            | go (k, _ :: xs) = go (k - 1, xs)
+        in go (i, toList d) end
+
+  fun map g (f, fn_, b, bn) = (List.map g f, fn_, List.map g b, bn)
+
+  fun app g d = List.app g (toList d)
+
+  fun foldl g acc d = List.foldl g acc (toList d)
+
+  fun foldr g acc d = List.foldr g acc (toList d)
+
+  fun filter p d = fromList (List.filter p (toList d))
+
+  fun append (d1, d2) = fromList (toList d1 @ toList d2)
+
+  fun equal eq (d1, d2) =
+      let
+        fun go ([], []) = true
+          | go (x :: xs, y :: ys) = eq (x, y) andalso go (xs, ys)
+          | go _ = false
+      in
+        go (toList d1, toList d2)
+      end
 end
